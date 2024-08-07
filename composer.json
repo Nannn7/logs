@@ -1,0 +1,30 @@
+{
+    "name": "daengdeni/logs-module",
+    "description": "",
+    "authors": [
+        {
+            "name": "Daeng Deni Mardaeni",
+            "email": "ddeni05@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Logs\\": "app/",
+            "Modules\\Logs\\Database\\Factories\\": "database/factories/",
+            "Modules\\Logs\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Logs\\Tests\\": "tests/"
+        }
+    }
+}

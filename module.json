@@ -1,0 +1,45 @@
+{
+    "name": "Logs",
+    "alias": "logs",
+    "database": "",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Logs\\Providers\\LogsServiceProvider"
+    ],
+    "files": [],
+    "menu": {
+        "main": [],
+        "master": [],
+        "system": [
+            {
+                "title": "Logs",
+                "path": "",
+                "icon": "ki-filled ki-tablet-text-down text-lg",
+                "classes": "",
+                "attributes": [],
+                "permission": "",
+                "roles": [],
+                "sub": [
+                    {
+                        "title": "System Logs",
+                        "path": "",
+                        "classes": "",
+                        "attributes": [],
+                        "permission": "",
+                        "roles": []
+                    },
+                    {
+                        "title": "Audit Logs",
+                        "path": "",
+                        "classes": "",
+                        "attributes": [],
+                        "permission": "",
+                        "roles": []
+                    }
+                ]
+            }
+        ]
+    }
+}
