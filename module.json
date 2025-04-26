@@ -15,12 +15,14 @@
         "system": [
             {
                 "title": "Logs",
-                "path": "",
-                "icon": "ki-filled ki-tablet-text-down text-lg",
+                "path": "logs",
+                "icon": "ki-filled ki-tablet-text-down text-lg text-primary",
                 "classes": "",
                 "attributes": [],
                 "permission": "",
-                "roles": [],
+                "roles": [
+                    "administrator"
+                ],
                 "sub": [
                     {
                         "title": "System Logs",
@@ -28,15 +30,19 @@
                         "classes": "",
                         "attributes": [],
                         "permission": "",
-                        "roles": []
+                        "roles": [
+                            "administrator"
+                        ]
                     },
                     {
                         "title": "Audit Logs",
-                        "path": "",
+                        "path": "logs.audit",
                         "classes": "",
                         "attributes": [],
                         "permission": "",
-                        "roles": []
+                        "roles": [
+                            "administrator"
+                        ]
                     }
                 ]
             }
