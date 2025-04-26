@@ -22,6 +22,10 @@ class LogsServiceProvider extends ServiceProvider
         $this->registerConfig();
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->moduleName, 'database/migrations'));
+
+        if (class_exists('Breadcrumbs')) {
+            require __DIR__ . '/../../routes/breadcrumbs.php';
+        }
     }
 
     /**
