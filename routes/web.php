@@ -1,7 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Modules\Logs\Http\Controllers\LogsController;
+    use Modules\Logs\Http\Controllers\AuditLogsController;
+    use Modules\Logs\Http\Controllers\LogsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,5 +16,12 @@ use Modules\Logs\Http\Controllers\LogsController;
 */
 
 Route::group([], function () {
-    Route::resource('logs', LogsController::class)->names('logs');
+    Route::name('logs.')->prefix('logs')->group(function () {
+        Route::name('audit.')->prefix('audit')->group(function () {
+            Route::get('datatables', [AuditLogsController::class, 'datatable'])->name('datatables');
+        });
+        Route::resource('audit', AuditLogsController::class)->only(['index','delete']);
+    });
+
+    Route::resource('logs', LogsController::class);
 });
