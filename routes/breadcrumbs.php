@@ -13,3 +13,8 @@
         $trail->parent('logs');
         $trail->push('Audit Logs', route('logs.audit.index'));
     });
+
+    Breadcrumbs::for('logs.system', function (BreadcrumbTrail $trail) {
+        $trail->parent('logs');
+        $trail->push('System Logs', route('logs.system.index'));
+    });
