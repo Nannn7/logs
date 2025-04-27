@@ -102,7 +102,34 @@
                     title: 'Properties',
                     render: (item, data) => {
                         if (!data.properties) return 'N/A';
-                        return `<pre>${JSON.stringify(data.properties, null, 2)}</pre>`;
+
+                        // Generate a unique ID for this property
+                        const propertyId = `property-${data.id || Math.random().toString(36).substr(2, 9)}`;
+
+                        // Create a shortened preview (first 50 characters)
+                        const preview = JSON.stringify(data.properties).substring(0, 50) + (JSON.stringify(data.properties).length > 50 ? '...' : '');
+
+                        // Return HTML with expand/collapse functionality using Tailwind classes
+                        return `
+                            <div class="relative w-full">
+                                <div class="flex justify-between items-center w-full">
+                                    <div class="max-w-[calc(100%-50px)] whitespace-nowrap overflow-hidden text-ellipsis" id="preview-${propertyId}">${preview}</div>
+                                    <div class="hidden max-h-[300px] overflow-y-auto bg-gray-100 p-2.5 rounded mt-1.5 w-full" id="full-${propertyId}">
+                                        <pre class="m-0 whitespace-pre-wrap break-words">${JSON.stringify(data.properties, null, 2)}</pre>
+                                    </div>
+                                    <div class="flex items-center ml-2.5">
+                                        <button type="button" class="btn btn-sm btn-outline btn-icon btn-info expand-property"
+                                                data-property-id="${propertyId}" id="expand-${propertyId}">
+                                            <i class="ki-duotone ki-arrow-down fs-7"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline btn-icon btn-info collapse-property hidden"
+                                                data-property-id="${propertyId}" id="collapse-${propertyId}">
+                                            <i class="ki-duotone ki-arrow-up fs-7"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
                     }
                 },
                 causer_type: {
@@ -122,7 +149,7 @@
                     title: 'Date/Time',
                     render: (item, data) => {
                         const date = new Date(data.created_at);
-                        return date.toLocaleString();
+                        return window.formatTanggalWaktuIndonesia(date)
                     }
                 }
             },
@@ -130,11 +157,42 @@
 
         let dataTable = new KTDataTable(element, dataTableOptions);
 
+        // Add event delegation for expand/collapse buttons
+        document.querySelector('#audit-logs-table').addEventListener('click', function(e) {
+            // Handle expand button click
+            if (e.target.closest('.expand-property')) {
+                const button = e.target.closest('.expand-property');
+                const propertyId = button.getAttribute('data-property-id');
+
+                // Show full property and hide preview
+                document.getElementById(`preview-${propertyId}`).style.display = 'none';
+                document.getElementById(`full-${propertyId}`).style.display = 'block';
+
+                // Toggle buttons
+                document.getElementById(`expand-${propertyId}`).style.display = 'none';
+                document.getElementById(`collapse-${propertyId}`).style.display = 'inline-flex';
+            }
+
+            // Handle collapse button click
+            if (e.target.closest('.collapse-property')) {
+                const button = e.target.closest('.collapse-property');
+                const propertyId = button.getAttribute('data-property-id');
+
+                // Hide full property and show preview
+                document.getElementById(`preview-${propertyId}`).style.display = 'block';
+                document.getElementById(`full-${propertyId}`).style.display = 'none';
+
+                // Toggle buttons
+                document.getElementById(`expand-${propertyId}`).style.display = 'inline-flex';
+                document.getElementById(`collapse-${propertyId}`).style.display = 'none';
+            }
+        });
+
         // Custom search functionality
         searchInput.addEventListener('input', function() {
             const searchValue = this.value.trim();
             // Reset to page 1 when searching and then perform search
-            dataTable.goToPage(1);
+            dataTable.goPage(1);
             dataTable.search(searchValue, true);
         });
 

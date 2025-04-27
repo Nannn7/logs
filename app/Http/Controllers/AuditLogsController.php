@@ -29,6 +29,7 @@
                     $q->where('log_name', 'LIKE', "%$search%")
                       ->orWhere('description', 'LIKE', "%$search%")
                       ->orWhere('subject_id', 'LIKE', "%$search%")
+                      ->orWhere('subject_type', 'LIKE', "%$search%")
                       ->orWhere('causer_id', 'LIKE', "%$search%")
                       ->orWhere('properties', 'LIKE', "%$search%");
                 });
