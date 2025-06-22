@@ -10,10 +10,12 @@ use Jackiedo\LogReader\LogReader;
 class SystemLogsController extends Controller
 {
     protected $reader;
+    protected $user;
 
     public function __construct(LogReader $reader)
     {
         $this->reader = $reader;
+        $this->user = Auth::guard('web')->user();
     }
 
     /**
@@ -21,10 +23,20 @@ class SystemLogsController extends Controller
      */
     public function index()
     {
+        // Check if the authenticated user has the required permission to view system logs
+        if (is_null($this->user) || !$this->user->can('system-logs.read')) {
+            abort(403, 'Sorry! You are not allowed to view system logs.');
+        }
+
         return view('logs::system');
     }
 
     public function datatable(Request $request){
+        // Check if the authenticated user has the required permission to view system logs
+        if (is_null($this->user) || !$this->user->can('system-logs.read')) {
+            abort(403, 'Sorry! You are not allowed to view system logs.');
+        }
+
         $data = collect();
         $this->reader->setLogPath(storage_path('logs'));
         try {

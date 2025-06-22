@@ -9,16 +9,33 @@
 
     class AuditLogsController extends Controller
     {
+        protected $user;
+
+        public function __construct()
+        {
+            $this->user = Auth::guard('web')->user();
+        }
+
         /**
          * Display a listing of the resource.
          */
         public function index()
         {
+            // Check if the authenticated user has the required permission to view audit logs
+            if (is_null($this->user) || !$this->user->can('audit-logs.read')) {
+                abort(403, 'Sorry! You are not allowed to view audit logs.');
+            }
+
             return view('logs::audit');
         }
 
         public function datatable(Request $request)
         {
+            // Check if the authenticated user has the required permission to view audit logs
+            if (is_null($this->user) || !$this->user->can('audit-logs.read')) {
+                abort(403, 'Sorry! You are not allowed to view audit logs.');
+            }
+
             // Retrieve data from the database
             $query = Activity::query();
 
@@ -97,6 +114,5 @@
                 'totalCount'      => $filteredRecords,
                 'data'            => $data,
             ]);
-
         }
     }
