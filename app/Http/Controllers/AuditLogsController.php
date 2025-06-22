@@ -6,6 +6,7 @@
     use Illuminate\Http\Request;
     use Modules\Usermanagement\Models\User;
     use Spatie\Activitylog\Models\Activity;
+    use Illuminate\Support\Facades\Auth;
 
     class AuditLogsController extends Controller
     {
@@ -13,7 +14,14 @@
 
         public function __construct()
         {
-            $this->user = Auth::guard('web')->user();
+            // Mengatur middleware auth
+            $this->middleware('auth');
+
+            // Mengatur user setelah middleware auth dijalankan
+            $this->middleware(function ($request, $next) {
+                $this->user = Auth::user();
+                return $next($request);
+            });
         }
 
         /**

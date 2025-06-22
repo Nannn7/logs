@@ -16,14 +16,10 @@
             $data = $this->data();
 
             foreach ($data as $value) {
-                $group = PermissionGroup::updateOrCreate([
+                PermissionGroup::updateOrCreate([
                     'name'       => $value['name'],
                     'slug'       => Str::slug($value['name'])
                 ]);
-
-                foreach ($this->crudActions($group->name) as $action) {
-                    $data[] = ['name' => $action, 'group' => $group->id];
-                }
             }
         }
 
@@ -33,19 +29,5 @@
                 ['name' => 'system-logs'],
                 ['name' => 'audit-logs'],
             ];
-        }
-
-        public function crudActions($name)
-        {
-            $actions = [];
-            // list of permission actions
-            $crud = ['create', 'read', 'update', 'delete','export', 'authorize', 'report','restore'];
-
-
-            foreach ($crud as $value) {
-                $actions[] = $name . '.' . $value;
-            }
-
-            return $actions;
         }
     }

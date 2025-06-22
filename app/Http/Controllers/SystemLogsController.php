@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Jackiedo\LogReader\Exceptions\UnableToRetrieveLogFilesException;
 use Jackiedo\LogReader\LogReader;
+use Illuminate\Support\Facades\Auth;
 
 class SystemLogsController extends Controller
 {
@@ -15,7 +16,14 @@ class SystemLogsController extends Controller
     public function __construct(LogReader $reader)
     {
         $this->reader = $reader;
-        $this->user = Auth::guard('web')->user();
+        // Mengatur middleware auth
+        $this->middleware('auth');
+
+        // Mengatur user setelah middleware auth dijalankan
+        $this->middleware(function ($request, $next) {
+            $this->user = Auth::user();
+            return $next($request);
+        });
     }
 
     /**
