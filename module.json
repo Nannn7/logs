@@ -21,7 +21,8 @@
                 "attributes": [],
                 "permission": "",
                 "roles": [
-                    "administrator"
+                    "administrator",
+                    "adminkredit"
                 ],
                 "sub": [
                     {
