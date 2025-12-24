@@ -43,6 +43,18 @@
                         "roles": [
                             "administrator"
                         ]
+                    },
+
+                    {
+                        "title": "Dokumen ADK Logs",
+                        "path": "logs.dokumen",
+                        "classes": "",
+                        "attributes": [],
+                        "permission": "",
+                        "roles": [
+                            "administrator",
+                            "adminkredit"
+                        ]
                     }
                 ]
             }
