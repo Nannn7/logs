@@ -22,7 +22,8 @@
                 "permission": "",
                 "roles": [
                     "administrator",
-                    "adminkredit"
+                    "adminkredit",
+                    "auditor"
                 ],
                 "sub": [
                     {
@@ -54,7 +55,8 @@
                         "permission": "",
                         "roles": [
                             "administrator",
-                            "adminkredit"
+                            "adminkredit",
+                            "auditor"
                         ]
                     }
                 ]
