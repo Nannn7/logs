@@ -104,81 +104,98 @@
 
             // Map causer_id to creator name
             $data = $data->map(function ($item) {
-                // Map creator name
-                if($item->description !== 'updated')
-                    //skip that item only
+    // Map creator name first
+    if ($item->causer_id && $item->causer_type === 'Modules\\Usermanagement\\Models\\User') {
+        $user = User::find($item->causer_id);
+        $item->creator_name = $user ? $user->name : 'Unknown User';
+    } else {
+        $item->creator_name = 'System';
+    }
 
-                if ($item->causer_id && $item->causer_type === 'Modules\\Usermanagement\\Models\\User') {
-                    $user = User::find($item->causer_id);
-                    $item->creator_name = $user ? $user->name : 'Unknown User';
-                } else {
-                    $item->creator_name = 'System';
-                }
+    // Apply filtering ONLY for adminkredit role
+    if (auth()->user()->hasRole('adminkredit')) {
 
-                // Filter for adminkredit role
-                if (auth()->user()->hasRole('adminkredit')) {
+        // For adminkredit, we ONLY care about specific field changes
 
-                    // Handle DokumenJaminan
-                    if ($item->subject_type === 'Modules\\Adk\\Models\\DokumenJaminan') {
-                        if ($item->properties) {
-                            $props = json_decode($item->properties, true);
+        // Handle DokumenJaminan - ONLY show if jenis_bukti_kepemilikan_id changed
+        if ($item->subject_type === 'Modules\\Adk\\Models\\DokumenJaminan') {
+            if ($item->properties) {
+                $props = json_decode($item->properties, true);
 
-                            if (isset($props['old']['jenis_bukti_kepemilikan_id'],
-                                    $props['attributes']['jenis_bukti_kepemilikan_id'])) {
+                if (isset($props['old']['jenis_bukti_kepemilikan_id'],
+                         $props['attributes']['jenis_bukti_kepemilikan_id'])) {
 
-                                $oldValue = $props['old']['jenis_bukti_kepemilikan_id'];
-                                $newValue = $props['attributes']['jenis_bukti_kepemilikan_id'];
+                    $oldValue = $props['old']['jenis_bukti_kepemilikan_id'];
+                    $newValue = $props['attributes']['jenis_bukti_kepemilikan_id'];
 
-                                if ($oldValue !== $newValue) {
-                                    $before = JenisBuktiKepemilikan::find($oldValue)?->name;
-                                    $after = JenisBuktiKepemilikan::find($newValue)?->name;
+                    // Only return if this specific field changed
+                    if ($oldValue !== $newValue) {
+                        $before = JenisBuktiKepemilikan::find($oldValue)?->name;
+                        $after = JenisBuktiKepemilikan::find($newValue)?->name;
 
-                                    $props['old']['jenis_bukti_kepemilikan_id'] = $before;
-                                    $props['attributes']['jenis_bukti_kepemilikan_id'] = $after;
+                        $props['old']['jenis_bukti_kepemilikan_id'] = $before;
+                        $props['attributes']['jenis_bukti_kepemilikan_id'] = $after;
 
-                                    $item->properties = $props;
-                                }
-                            }
-                        }
-                        return $item; // ✅ Always return for DokumenJaminan
-                    }
-
-                    // Handle other document types
-                    else {
-                        $props = is_array($item->properties)
-                            ? $item->properties
-                            : json_decode($item->properties, true);
-
-                        if (!is_array($props)) {
-                            return null; // Explicitly return null for invalid data
-                        }
-
-                        Log::info("Before Properties:", $props);
-
-                        // Check for nama_dokumen changes
-                        if (isset($props['old']['nama_dokumen'], $props['attributes']['nama_dokumen'])
-                            && $props['old']['nama_dokumen'] !== $props['attributes']['nama_dokumen']) {
-
-                            $item->properties = $props;
-                            Log::info("After Properties:", $props);
-                        }
-
-                        return $item; // ✅ Always return the item
+                        $item->properties = $props;
+                        return $item; // ✅ Return only if field changed
                     }
                 }
+            }
+            // If jenis_bukti_kepemilikan_id didn't change, skip this item
+            return null;
+        }
 
-                // Non-adminkredit users
-                return $item;
-            });
+        // Handle DokumenLegal and DokumenPendukung - ONLY show if nama_dokumen changed
+        else if ($item->subject_type === 'Modules\\Adk\\Models\\DokumenLegal' ||
+                 $item->subject_type === 'Modules\\Adk\\Models\\DokumenPendukung') {
 
-            // Calculate the page count
-            $pageCount = ceil($filteredRecords / ($request->get('size') ?: 1));
+            $props = is_array($item->properties)
+                ? $item->properties
+                : json_decode($item->properties, true);
 
-            // Calculate the current page number
-            $currentPage = $request->get('page') ?: 1;
-            // dd($data);
-            // Log::info("Data :", $data->toArray());
-            Log::info("Data :", $data->pluck('id')->toArray());
+            if (!is_array($props)) {
+                return null; // Skip invalid data
+            }
+
+            // Only return if nama_dokumen changed
+            if (isset($props['old']['nama_dokumen'], $props['attributes']['nama_dokumen'])
+                && $props['old']['nama_dokumen'] !== $props['attributes']['nama_dokumen']) {
+
+                $item->properties = $props;
+                return $item; // ✅ Return only if nama_dokumen changed (regardless of description)
+            }
+
+            // If nama_dokumen didn't change, skip this item
+            return null;
+        }
+
+        // For other document types that adminkredit can see
+        else {
+            // Skip 'updated' description for other types
+            if ($item->description === 'updated') {
+                return null;
+            }
+            return $item;
+        }
+    }
+
+    // For NON-adminkredit users (Auditor, etc.) - NO FILTERING, return everything
+    return $item;
+});
+
+// Remove null values and re-index (only affects adminkredit filtered items)
+$data = $data->filter()->values();
+
+// IMPORTANT: Recalculate filtered records count after filtering
+$filteredRecords = $data->count();
+
+// Calculate the page count based on NEW filtered count
+$pageCount = ceil($filteredRecords / ($request->get('size') ?: 1));
+
+// Calculate the current page number
+$currentPage = $request->get('page') ?: 1;
+
+Log::info("Data :", $data->pluck('id')->toArray());
             // Return the response data as a JSON object
             return response()->json([
                 'draw'            => $request->get('draw'),
