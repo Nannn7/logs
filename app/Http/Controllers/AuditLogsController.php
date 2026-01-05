@@ -7,6 +7,8 @@
     use Modules\Usermanagement\Models\User;
     use Spatie\Activitylog\Models\Activity;
     use Illuminate\Support\Facades\Auth;
+    use Illuminate\Support\Facades\Log;
+    use Modules\Adk\Models\JenisBuktiKepemilikan;
 
     class AuditLogsController extends Controller
     {
@@ -36,7 +38,7 @@
 
             return view('logs::audit');
         }
-        
+
         public function indexAdminKredit()
         {
             // Check if the authenticated user has the required permission to view audit logs
@@ -102,19 +104,70 @@
 
             // Map causer_id to creator name
             $data = $data->map(function ($item) {
-                // Create a new property for the creator's name
+                // Map creator name
+                if($item->description !== 'updated')
+                    //skip that item only
+
                 if ($item->causer_id && $item->causer_type === 'Modules\\Usermanagement\\Models\\User') {
-                    // Try to find the user
                     $user = User::find($item->causer_id);
-                    if ($user) {
-                        $item->creator_name = $user->name;
-                    } else {
-                        $item->creator_name = 'Unknown User';
-                    }
+                    $item->creator_name = $user ? $user->name : 'Unknown User';
                 } else {
                     $item->creator_name = 'System';
                 }
 
+                // Filter for adminkredit role
+                if (auth()->user()->hasRole('adminkredit')) {
+
+                    // Handle DokumenJaminan
+                    if ($item->subject_type === 'Modules\\Adk\\Models\\DokumenJaminan') {
+                        if ($item->properties) {
+                            $props = json_decode($item->properties, true);
+
+                            if (isset($props['old']['jenis_bukti_kepemilikan_id'],
+                                    $props['attributes']['jenis_bukti_kepemilikan_id'])) {
+
+                                $oldValue = $props['old']['jenis_bukti_kepemilikan_id'];
+                                $newValue = $props['attributes']['jenis_bukti_kepemilikan_id'];
+
+                                if ($oldValue !== $newValue) {
+                                    $before = JenisBuktiKepemilikan::find($oldValue)?->name;
+                                    $after = JenisBuktiKepemilikan::find($newValue)?->name;
+
+                                    $props['old']['jenis_bukti_kepemilikan_id'] = $before;
+                                    $props['attributes']['jenis_bukti_kepemilikan_id'] = $after;
+
+                                    $item->properties = $props;
+                                }
+                            }
+                        }
+                        return $item; // ✅ Always return for DokumenJaminan
+                    }
+
+                    // Handle other document types
+                    else {
+                        $props = is_array($item->properties)
+                            ? $item->properties
+                            : json_decode($item->properties, true);
+
+                        if (!is_array($props)) {
+                            return null; // Explicitly return null for invalid data
+                        }
+
+                        Log::info("Before Properties:", $props);
+
+                        // Check for nama_dokumen changes
+                        if (isset($props['old']['nama_dokumen'], $props['attributes']['nama_dokumen'])
+                            && $props['old']['nama_dokumen'] !== $props['attributes']['nama_dokumen']) {
+
+                            $item->properties = $props;
+                            Log::info("After Properties:", $props);
+                        }
+
+                        return $item; // ✅ Always return the item
+                    }
+                }
+
+                // Non-adminkredit users
                 return $item;
             });
 
@@ -123,7 +176,9 @@
 
             // Calculate the current page number
             $currentPage = $request->get('page') ?: 1;
-
+            // dd($data);
+            // Log::info("Data :", $data->toArray());
+            Log::info("Data :", $data->pluck('id')->toArray());
             // Return the response data as a JSON object
             return response()->json([
                 'draw'            => $request->get('draw'),
