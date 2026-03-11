@@ -1,66 +1,51 @@
 {
-    "name": "Logs",
-    "alias": "logs",
-    "database": "",
-    "description": "",
-    "keywords": [],
-    "priority": 0,
-    "providers": [
-        "Modules\\Logs\\Providers\\LogsServiceProvider"
-    ],
-    "files": [],
-    "menu": {
-        "main": [],
-        "master": [],
-        "system": [
-            {
-                "title": "Logs",
-                "path": "logs",
-                "icon": "ki-filled ki-tablet-text-down text-lg text-primary",
-                "classes": "",
-                "attributes": [],
-                "permission": "",
-                "roles": [
-                    "administrator",
-                    "adminkredit",
-                    "auditor"
-                ],
-                "sub": [
-                    {
-                        "title": "System Logs",
-                        "path": "logs.system",
-                        "classes": "",
-                        "attributes": [],
-                        "permission": "",
-                        "roles": [
-                            "administrator"
-                        ]
-                    },
-                    {
-                        "title": "Audit Logs",
-                        "path": "logs.audit",
-                        "classes": "",
-                        "attributes": [],
-                        "permission": "",
-                        "roles": [
-                            "administrator"
-                        ]
-                    },
-
-                    {
-                        "title": "Dokumen ADK Logs",
-                        "path": "logs.dokumen",
-                        "classes": "",
-                        "attributes": [],
-                        "permission": "",
-                        "roles": [
-                            "administrator",
-                            "adminkredit",
-                            "auditor"
-                        ]
-                    }
-                ]
-            }
+  "name": "Logs",
+  "alias": "logs",
+  "database": "",
+  "description": "",
+  "keywords": [],
+  "priority": 0,
+  "providers": ["Modules\\Logs\\Providers\\LogsServiceProvider"],
+  "files": [],
+  "menu": {
+    "main": [],
+    "master": [],
+    "system": [
+      {
+        "title": "Log",
+        "path": "logs",
+        "icon": "ki-filled ki-tablet-text-down text-lg text-primary",
+        "classes": "",
+        "attributes": [],
+        "permission": "",
+        "roles": ["administrator", "adminkredit", "admindokumen", "auditor"],
+        "sub": [
+          {
+            "title": "Log Sistem",
+            "path": "logs.system",
+            "classes": "",
+            "attributes": [],
+            "permission": "",
+            "roles": ["administrator"]
+          },
+          {
+            "title": "Log Audit",
+            "path": "logs.audit",
+            "classes": "",
+            "attributes": [],
+            "permission": "",
+            "roles": ["administrator"]
+          },
+          {
+            "title": "Log Dokumen",
+            "path": "logs.dokumen",
+            "classes": "",
+            "attributes": [],
+            "permission": "",
+            "roles": ["administrator", "adminkredit", "admindokumen", "auditor"]
+          }
         ]
-    }
+      }
+    ]
+  }
 }
