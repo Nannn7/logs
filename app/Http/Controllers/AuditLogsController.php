@@ -1,104 +1,119 @@
 <?php
 
-    namespace Modules\Logs\Http\Controllers;
+namespace Modules\Logs\Http\Controllers;
 
-    use App\Http\Controllers\Controller;
-    use Illuminate\Http\Request;
-    use Modules\Usermanagement\Models\User;
-    use Spatie\Activitylog\Models\Activity;
-    use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Modules\Usermanagement\Models\User;
+use Spatie\Activitylog\Models\Activity;
 
-    class AuditLogsController extends Controller
+class AuditLogsController extends Controller
+{
+    protected $user;
+
+    public function __construct()
     {
-        protected $user;
+        // Mengatur middleware auth
+        $this->middleware('auth');
 
-        public function __construct()
-        {
-            // Mengatur middleware auth
-            $this->middleware('auth');
+        // Mengatur user setelah middleware auth dijalankan
+        $this->middleware(function ($request, $next) {
+            $this->user = Auth::user();
+            return $next($request);
+        });
+    }
 
-            // Mengatur user setelah middleware auth dijalankan
-            $this->middleware(function ($request, $next) {
-                $this->user = Auth::user();
-                return $next($request);
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
+    {
+        // Check if the authenticated user has the required permission to view audit logs
+        if (is_null($this->user) || !$this->user->can('audit-logs.read')) {
+            abort(403, 'Sorry! You are not allowed to view audit logs.');
+        }
+
+        return view('logs::audit');
+    }
+
+    public function datatable(Request $request)
+    {
+        if (is_null($this->user) || !$this->user->can('audit-logs.read')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Sorry! You are not allowed to view audit logs.',
+            ], 403);
+        }
+
+        $query = Activity::query()
+            ->select([
+                'id',
+                'log_name',
+                'description',
+                'subject_id',
+                'subject_type',
+                'causer_id',
+                'causer_type',
+                'properties',
+                'created_at',
+            ])
+            ->with('causer');
+
+        $search = trim((string) $request->get('search', ''));
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('log_name', 'ilike', "%{$search}%")
+                    ->orWhere('description', 'ilike', "%{$search}%")
+                    ->orWhere('subject_type', 'ilike', "%{$search}%")
+                    ->orWhereRaw('subject_id::text ilike ?', ["%{$search}%"])
+                    ->orWhereRaw('causer_id::text ilike ?', ["%{$search}%"])
+                    ->orWhereRaw('properties::text ilike ?', ["%{$search}%"]);
             });
         }
 
-        /**
-         * Display a listing of the resource.
-         */
-        public function index()
-        {
-            // Check if the authenticated user has the required permission to view audit logs
-            if (is_null($this->user) || !$this->user->can('audit-logs.read')) {
-                abort(403, 'Sorry! You are not allowed to view audit logs.');
-            }
+        $sortField = (string) $request->get('sortField', 'created_at');
+        $sortOrder = strtolower((string) $request->get('sortOrder', 'desc'));
+        $allowedSort = [
+            'log_name',
+            'subject_type',
+            'description',
+            'properties',
+            'causer_type',
+            'causer_id',
+            'created_at',
+        ];
 
-            return view('logs::audit');
+        if (!in_array($sortField, $allowedSort, true)) {
+            $sortField = 'created_at';
         }
 
-        public function datatable(Request $request)
-        {
-            // Check if the authenticated user has the required permission to view audit logs
-            if (is_null($this->user) || !$this->user->can('audit-logs.read')) {
-                abort(403, 'Sorry! You are not allowed to view audit logs.');
-            }
+        if (!in_array($sortOrder, ['asc', 'desc'], true)) {
+            $sortOrder = 'desc';
+        }
 
-            // Retrieve data from the database
-            $query = Activity::query();
+        if ($sortField === 'properties') {
+            $query->orderByRaw("properties::text {$sortOrder}");
+        } else {
+            $query->orderBy($sortField, $sortOrder);
+        }
 
-            // Apply search filter if provided
-            if ($request->has('search') && !empty($request->get('search'))) {
-                $search = $request->get('search');
-                $query->where(function ($q) use ($search) {
-                    $q->where('log_name', 'LIKE', "%$search%")
-                      ->orWhere('description', 'LIKE', "%$search%")
-                      ->orWhere('subject_id', 'LIKE', "%$search%")
-                      ->orWhere('subject_type', 'LIKE', "%$search%")
-                      ->orWhere('causer_id', 'LIKE', "%$search%")
-                      ->orWhere('properties', 'LIKE', "%$search%");
-                });
-            }
+        $totalRecords = Activity::count();
+        $filteredRecords = (clone $query)->count();
 
-            // Apply sorting if provided
-            if ($request->has('sortOrder') && !empty($request->get('sortOrder'))) {
-                $order  = $request->get('sortOrder');
-                $column = $request->get('sortField');
-                $query->orderBy($column, $order);
-            } else {
-                // Default sorting by created_at descending
-                $query->orderBy('created_at', 'desc');
-            }
+        $page = max((int) $request->get('page', 1), 1);
+        $size = max((int) $request->get('size', 10), 1);
+        $offset = ($page - 1) * $size;
 
-            // Get the total count of records before pagination
-            $totalRecords = Activity::count();
-
-            // Get the filtered count before pagination
-            $filteredRecords = $query->count();
-
-            // Apply pagination if provided
-            if ($request->has('page') && $request->has('size')) {
-                $page   = $request->get('page');
-                $size   = $request->get('size');
-                $offset = ($page - 1) * $size; // Calculate the offset
-
-                $query->skip($offset)->take($size);
-            }
-
-            // Get the data for the current page
-            $data = $query->get();
-
-            // Map causer_id to creator name
-            $data = $data->map(function ($item) {
-                // Create a new property for the creator's name
-                if ($item->causer_id && $item->causer_type === 'Modules\\Usermanagement\\Models\\User') {
-                    // Try to find the user
-                    $user = User::find($item->causer_id);
-                    if ($user) {
-                        $item->creator_name = $user->name;
-                    } else {
-                        $item->creator_name = 'Unknown User';
-                    }
+        $data = $query
+            ->skip($offset)
+            ->take($size)
+            ->get()
+            ->map(function ($item) {
+                if ($item->causer instanceof User) {
+                    $item->creator_name = $item->causer->name;
+                } elseif ($item->causer_id && $item->causer_type === User::class) {
+                    $item->creator_name = 'Unknown User';
                 } else {
                     $item->creator_name = 'System';
                 }
@@ -106,21 +121,16 @@
                 return $item;
             });
 
-            // Calculate the page count
-            $pageCount = ceil($filteredRecords / ($request->get('size') ?: 1));
+        $pageCount = (int) ceil($filteredRecords / $size);
 
-            // Calculate the current page number
-            $currentPage = $request->get('page') ?: 1;
-
-            // Return the response data as a JSON object
-            return response()->json([
-                'draw'            => $request->get('draw'),
-                'recordsTotal'    => $totalRecords,
-                'recordsFiltered' => $filteredRecords,
-                'pageCount'       => $pageCount,
-                'page'            => $currentPage,
-                'totalCount'      => $filteredRecords,
-                'data'            => $data,
-            ]);
-        }
+        return response()->json([
+            'draw'            => $request->get('draw'),
+            'recordsTotal'    => $totalRecords,
+            'recordsFiltered' => $filteredRecords,
+            'pageCount'       => $pageCount,
+            'page'            => $page,
+            'totalCount'      => $filteredRecords,
+            'data'            => $data,
+        ]);
     }
+}
