@@ -21,7 +21,8 @@
                 "attributes": [],
                 "permission": "",
                 "roles": [
-                    "administrator"
+                    "administrator",
+                    "admin siskon"
                 ],
                 "sub": [
                     {
@@ -29,9 +30,10 @@
                         "path": "logs.system",
                         "classes": "",
                         "attributes": [],
-                        "permission": "",
+                        "permission": "system-logs.read",
                         "roles": [
-                            "administrator"
+                            "administrator",
+                            "admin siskon"
                         ]
                     },
                     {
@@ -39,9 +41,10 @@
                         "path": "logs.audit",
                         "classes": "",
                         "attributes": [],
-                        "permission": "",
+                        "permission": "audit-logs.read",
                         "roles": [
-                            "administrator"
+                            "administrator",
+                            "admin siskon"
                         ]
                     }
                 ]
