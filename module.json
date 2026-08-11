@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {
     "name": "Logs",
     "alias": "logs",
@@ -52,3 +53,59 @@
         ]
     }
 }
+=======
+{
+    "name": "Logs",
+    "alias": "logs",
+    "database": "",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Logs\\Providers\\LogsServiceProvider"
+    ],
+    "files": [],
+    "menu": {
+        "main": [],
+        "master": [],
+        "system": [
+            {
+                "title": "Logs",
+                "path": "logs",
+                "icon": "ki-filled ki-tablet-text-down text-lg text-primary",
+                "classes": "",
+                "attributes": [],
+                "permission": "",
+                "roles": [
+                    "administrator",
+                    "admin siskon"
+                ],
+                "sub": [
+                    {
+                        "title": "System Logs",
+                        "path": "logs.system",
+                        "classes": "",
+                        "attributes": [],
+                        "permission": "",
+                        "roles": [
+                            "administrator",
+                            "admin siskon"
+                        ]
+                    },
+                    {
+                        "title": "Audit Logs",
+                        "path": "logs.audit",
+                        "classes": "",
+                        "attributes": [],
+                        "permission": "",
+                        "roles": [
+                            "administrator",
+                            "admin siskon"
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}
+>>>>>>> fa21311f2c33c4e0bf569684246060a09c1f3a65
