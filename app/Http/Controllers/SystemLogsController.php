@@ -4,9 +4,9 @@ namespace Modules\Logs\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Jackiedo\LogReader\Exceptions\UnableToRetrieveLogFilesException;
 use Jackiedo\LogReader\LogReader;
-use Illuminate\Support\Facades\Auth;
 
 class SystemLogsController extends Controller
 {
@@ -39,52 +39,64 @@ class SystemLogsController extends Controller
         return view('logs::system');
     }
 
-    public function datatable(Request $request){
+    public function datatable(Request $request)
+    {
         // Check if the authenticated user has the required permission to view system logs
         if (is_null($this->user) || !$this->user->can('system-logs.read')) {
-            abort(403, 'Sorry! You are not allowed to view system logs.');
+            return response()->json([
+                'success' => false,
+                'message' => 'Sorry! You are not allowed to view system logs.',
+            ], 403);
         }
 
-        $data = collect();
         $this->reader->setLogPath(storage_path('logs'));
+
         try {
-            $data = $this->reader->get()->merge($data);
+            $data = $this->reader->get();
         } catch (UnableToRetrieveLogFilesException $exception) {
-            echo $exception->getMessage();
-            exit;
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage(),
+            ], 500);
         }
 
-        $data = $data->map(function ($a) {
-            return (collect($a))->only(['id', 'date', 'environment', 'level', 'file_path', 'context']);
-        });
-
-
-        // Get pagination parameters from request
         $perPage = (int) $request->input('size', 10);
         $currentPage = (int) $request->input('page', 1);
-        $search = $request->input('search', '');
+        $search = trim((string) $request->input('search', ''));
+        $sortField = (string) $request->input('sortField', 'date');
+        $sortOrder = strtolower((string) $request->input('sortOrder', 'desc'));
+        $allowedSortFields = ['id', 'context', 'file_path', 'environment', 'level', 'date'];
 
-        // Apply search if provided
-        if (!empty($search)) {
+        if (!in_array($sortField, $allowedSortFields, true)) {
+            $sortField = 'date';
+        }
+
+        if (!in_array($sortOrder, ['asc', 'desc'], true)) {
+            $sortOrder = 'desc';
+        }
+
+        $totalRecords = $data->count();
+
+        if ($search !== '') {
             $data = $data->filter(function ($item) use ($search) {
-                // Search in relevant fields
                 return stripos($item['level'], $search) !== false ||
                     stripos($item['environment'], $search) !== false ||
                     stripos($item['id'], $search) !== false ||
+                    stripos($item['file_path'], $search) !== false ||
                     stripos($item['context'], $search) !== false;
             });
         }
 
-        // Get total count before pagination
-        $totalRecords = $data->count();
-        $filteredRecords = $totalRecords; // Same as total if no filtering applied
+        $filteredRecords = $data->count();
 
-        // Apply pagination
+        $data = $sortOrder === 'asc'
+            ? $data->sortBy($sortField, SORT_NATURAL | SORT_FLAG_CASE)
+            : $data->sortByDesc($sortField, SORT_NATURAL | SORT_FLAG_CASE);
+
         $offset = ($currentPage - 1) * $perPage;
         $data = $data->slice($offset, $perPage)->values();
 
-        // Calculate page count
-        $pageCount = ceil($filteredRecords / $perPage);
+        $pageCount = $perPage > 0 ? (int) ceil($filteredRecords / $perPage) : 0;
 
         return response()->json([
             'draw'            => (int) $request->input('draw', 1),
@@ -93,7 +105,7 @@ class SystemLogsController extends Controller
             'pageCount'       => $pageCount,
             'page'            => $currentPage,
             'totalCount'      => $filteredRecords,
-            'data'            => $data,
+            'data'            => $data->all(),
         ]);
     }
 }

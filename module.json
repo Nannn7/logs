@@ -1,4 +1,112 @@
+<<<<<<< HEAD
 {
+    "name": "Logs",
+    "alias": "logs",
+    "database": "",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Logs\\Providers\\LogsServiceProvider"
+    ],
+    "files": [],
+    "menu": {
+        "main": [],
+        "master": [],
+        "system": [
+            {
+                "title": "Logs",
+                "path": "logs",
+                "icon": "ki-filled ki-tablet-text-down text-lg text-primary",
+                "classes": "",
+                "attributes": [],
+                "permission": "",
+                "roles": [
+                    "administrator",
+                    "admin siskon"
+                ],
+                "sub": [
+                    {
+                        "title": "System Logs",
+                        "path": "logs.system",
+                        "classes": "",
+                        "attributes": [],
+                        "permission": "system-logs.read",
+                        "roles": [
+                            "administrator",
+                            "admin siskon"
+                        ]
+                    },
+                    {
+                        "title": "Audit Logs",
+                        "path": "logs.audit",
+                        "classes": "",
+                        "attributes": [],
+                        "permission": "audit-logs.read",
+                        "roles": [
+                            "administrator",
+                            "admin siskon"
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}
+=======
+{
+<<<<<<< HEAD
+    "name": "Logs",
+    "alias": "logs",
+    "database": "",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Logs\\Providers\\LogsServiceProvider"
+    ],
+    "files": [],
+    "menu": {
+        "main": [],
+        "master": [],
+        "system": [
+            {
+                "title": "Logs",
+                "path": "logs",
+                "icon": "ki-filled ki-tablet-text-down text-lg text-primary",
+                "classes": "",
+                "attributes": [],
+                "permission": "",
+                "roles": [
+                    "administrator",
+                    "admin siskon"
+                ],
+                "sub": [
+                    {
+                        "title": "System Logs",
+                        "path": "logs.system",
+                        "classes": "",
+                        "attributes": [],
+                        "permission": "",
+                        "roles": [
+                            "administrator",
+                            "admin siskon"
+                        ]
+                    },
+                    {
+                        "title": "Audit Logs",
+                        "path": "logs.audit",
+                        "classes": "",
+                        "attributes": [],
+                        "permission": "",
+                        "roles": [
+                            "administrator",
+                            "admin siskon"
+                        ]
+                    }
+                ]
+            }
+=======
   "name": "Logs",
   "alias": "logs",
   "database": "",
@@ -44,8 +152,10 @@
             "permission": "",
             "roles": ["administrator", "adminkredit", "admindokumen", "auditor"]
           }
+>>>>>>> 1742328187f1689f93ade2ab4053da783b9d9363
         ]
       }
     ]
   }
 }
+>>>>>>> fa21311f2c33c4e0bf569684246060a09c1f3a65
